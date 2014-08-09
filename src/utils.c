@@ -187,7 +187,8 @@ GtkWidget* create_color_button(gint color, gint width, gint height
                                   , const char *tip
                                   , GCallback cb, gboolean toggle
                                   , gpointer data) {
-  GdkPixbuf *pixbuf, *img;
+  GdkPixbuf *pixbuf;
+  GtkWidget *img;
 
   pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, FALSE, 8
                               , width, height);

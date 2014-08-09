@@ -164,13 +164,13 @@ void switch_font_size_box(GtkShotPenEditor *editor) {
   GtkWidget *removed = NULL, *added = NULL;
 
   if (editor->pen->type == GTK_SHOT_PEN_TEXT
-                      && child == editor->size_box) {
-    removed = editor->size_box;
-    added = editor->font_box;
+                      && child == (GtkWidget*) editor->size_box) {
+    removed = (GtkWidget*) editor->size_box;
+    added = (GtkWidget*) editor->font_box;
   } else if (editor->pen->type != GTK_SHOT_PEN_TEXT
-                      && child == editor->font_box) {
-    removed = editor->font_box;
-    added = editor->size_box;
+                      && child == (GtkWidget*) editor->font_box) {
+    removed = (GtkWidget*) editor->font_box;
+    added = (GtkWidget*) editor->size_box;
   }
   if (removed && added) {
     g_object_ref(removed); // 增加引用,防止被删除
@@ -185,7 +185,7 @@ GtkBox* create_size_box(GtkShotPenEditor *editor) {
   GtkBox *hbox = GTK_BOX(gtk_hbox_new(FALSE, 2));
   GtkWidget *btn;
 
-  btn = create_xpm_button(small_xpm
+  btn = create_xpm_button((const char**) small_xpm
                               , _("small")
                               , G_CALLBACK(on_set_pen_size)
                               , TRUE, editor);
@@ -196,7 +196,7 @@ GtkBox* create_size_box(GtkShotPenEditor *editor) {
   // press HACK :-)
   gtk_toggle_button_mark_active(btn, TRUE);
 
-  btn = create_xpm_button(normal_xpm
+  btn = create_xpm_button((const char**) normal_xpm
                             , _("normal")
                             , G_CALLBACK(on_set_pen_size)
                             , TRUE, editor);
@@ -205,7 +205,7 @@ GtkBox* create_size_box(GtkShotPenEditor *editor) {
                           , GINT_TO_POINTER(GTK_SHOT_DEFAULT_PEN_SIZE * 2));
   pack_to_box(hbox, btn);
 
-  btn = create_xpm_button(big_xpm
+  btn = create_xpm_button((const char**) big_xpm
                               , _("big")
                               , G_CALLBACK(on_set_pen_size)
                               , TRUE, editor);
@@ -311,7 +311,7 @@ void on_set_pen_font(GtkFontButton *btn, GParamSpec *pspec
     if (editor->pen->text.fontname) {
       g_free(editor->pen->text.fontname);
     }
-    editor->fontname =
+    editor->fontname = (gchar*)
             gtk_font_button_get_font_name(GTK_FONT_BUTTON(btn));
     editor->pen->text.fontname = g_strdup(editor->fontname);
     gtk_widget_set_tooltip_text(GTK_WIDGET(btn), editor->fontname);

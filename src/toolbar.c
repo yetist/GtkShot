@@ -32,11 +32,27 @@ typedef struct _PenButton {
   GtkShotPenType type;
 } PenButton;
 static PenButton pen_btns[] = {
-  {.xpm = rectangle_xpm, .tips = N_("draw rectangle"), .type = GTK_SHOT_PEN_RECT},
-  {.xpm = ellipse_xpm, .tips = N_("draw ellipse"), .type = GTK_SHOT_PEN_ELLIPSE},
-  {.xpm = arrow_xpm, .tips = N_("draw arrow"), .type = GTK_SHOT_PEN_ARROW},
-  {.xpm = line_xpm, .tips = N_("draw line"), .type = GTK_SHOT_PEN_LINE},
-  {.xpm = text_xpm, .tips = N_("draw text"), .type = GTK_SHOT_PEN_TEXT}
+	{
+		.xpm = (const char**) rectangle_xpm,
+		.tips = N_("draw rectangle"),
+		.type = GTK_SHOT_PEN_RECT
+	},
+  {
+	  .xpm = (const char**) ellipse_xpm,
+	  .tips = N_("draw ellipse"),
+	  .type = GTK_SHOT_PEN_ELLIPSE},
+  {
+	  .xpm = (const char**) arrow_xpm,
+	  .tips = N_("draw arrow"),
+	  .type = GTK_SHOT_PEN_ARROW},
+  {
+	  .xpm = (const char**) line_xpm,
+	  .tips = N_("draw line"),
+	  .type = GTK_SHOT_PEN_LINE},
+  {
+	  .xpm = (const char**) text_xpm,
+	  .tips = N_("draw text"),
+	  .type = GTK_SHOT_PEN_TEXT}
 };
 
 // Button Events

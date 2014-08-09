@@ -1,5 +1,9 @@
 AM_CPPFLAGS = \
 		$(all_includes) \
+		-DGTK_DISABLE_DEPRECATED=1	\
+		-DGDK_DISABLE_DEPRECATED=1	\
+		-DGDK_PIXBUF_DISABLE_DEPRECATED=1	\
+		-DG_DISABLE_DEPRECATED=1	\
 		$(X11_CFLAGS) \
 		$(GTK_CFLAGS) \
 		-I$(top_srcdir) \
@@ -17,4 +21,4 @@ gtkshot_SOURCES = \
 		pen-editor.c \
 		input.c \
 		utils.c
-gtkshot_LDADD = $(X11_LIBS) $(GTK_LIBS)
+gtkshot_LDADD = $(X11_LIBS) $(GTK_LIBS) -lm
