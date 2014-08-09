@@ -62,9 +62,17 @@ gchar* choose_and_get_filename(GtkWindow *parent, char **type
 	GtkFileChooser *dialog = (GtkFileChooser*)
 		gtk_file_chooser_dialog_new(NULL, parent
 				, GTK_FILE_CHOOSER_ACTION_SAVE
+#if GTK_CHECK_VERSION(3,0,0)
+				, "_Cancel"
+#else
 				, GTK_STOCK_CANCEL
+#endif
 				, GTK_RESPONSE_CANCEL
+#if GTK_CHECK_VERSION(3,0,0)
+				, "document-save"
+#else
 				, GTK_STOCK_SAVE
+#endif
 				, GTK_RESPONSE_OK
 				, NULL);
 	gtk_file_chooser_set_do_overwrite_confirmation(dialog, TRUE);
@@ -150,11 +158,15 @@ GtkWidget* create_icon_button(const char *icon, const char *tip
 		, GCallback cb, gboolean toggle
 		, gpointer data) {
 	GtkWidget *img;
+#if GTK_CHECK_VERSION(3,0,0)
+	img = gtk_image_new_from_icon_name(icon, GTK_ICON_SIZE_SMALL_TOOLBAR);
+#else
 	if (g_str_has_prefix(icon, "gtk-")) {
 		img = gtk_image_new_from_stock(icon, GTK_ICON_SIZE_SMALL_TOOLBAR);
 	} else {
 		img = gtk_image_new_from_icon_name(icon, GTK_ICON_SIZE_SMALL_TOOLBAR);
 	}
+#endif
 	return create_image_button(img, tip, cb, toggle, data);
 }
 
@@ -181,9 +193,10 @@ void gtk_toggle_button_mark_active(GtkToggleButton *btn, gboolean act)
 {
 #if GTK_CHECK_VERSION(3,0,0)
 	//FIXME
-	GtkStateFlags new_state;
-	new_state = gtk_widget_get_state_flags (GTK_WIDGET (button)) & GTK_STATE_FLAG_ACTIVE;
-	gtk_widget_set_state_flags (GTK_WIDGET (button), new_state);
+	//GtkStateFlags new_state;
+	//new_state = gtk_widget_get_state_flags (GTK_WIDGET (button)) & GTK_STATE_FLAG_ACTIVE;
+	//gtk_widget_set_state_flags (GTK_WIDGET (button), new_state);
+	g_print("call: gtk_toggle_button_mark_active with %d\n", act);
 #else
 	//FIXME
 	g_print("call: gtk_toggle_button_mark_active with %d\n", act);

@@ -68,8 +68,8 @@ static gboolean on_save_to_clipboard(GtkButton *btn
 static gboolean on_quit(GtkButton *btn, GtkShotToolbar *toolbar);
 
 static void adjust_toolbar(GtkShotToolbar *toolbar);
-static GtkBox* create_pen_box(GtkShotToolbar *toolbar);
-static GtkBox* create_op_box(GtkShotToolbar *toolbar);
+static GtkWidget* create_pen_box(GtkShotToolbar *toolbar);
+static GtkWidget* create_op_box(GtkShotToolbar *toolbar);
 
 GtkShotToolbar* gtk_shot_toolbar_new(GtkShot *shot)
 {
@@ -78,13 +78,21 @@ GtkShotToolbar* gtk_shot_toolbar_new(GtkShot *shot)
 	GtkShotToolbar *toolbar = g_new(GtkShotToolbar, 1);
 	GtkWindow *window = create_popup_window(GTK_WINDOW(shot), width, height);
 
-	GtkBox *hbox = GTK_BOX(gtk_hbox_new(FALSE, 2));
+#if GTK_CHECK_VERSION(3,0,0)
+	GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
+#else
+	GtkWidget *hbox = gtk_hbox_new(FALSE, 2);
+#endif
 	toolbar->pen_box = create_pen_box(toolbar);
 	toolbar->op_box = create_op_box(toolbar);
 
 	pack_to_box(hbox, gtk_label_new("xxxxxxxxxxxxxx"));
 	pack_to_box(hbox, toolbar->pen_box);
+#if GTK_CHECK_VERSION(3,0,0)
+	pack_to_box(hbox, gtk_separator_new(GTK_ORIENTATION_VERTICAL));
+#else
 	pack_to_box(hbox, gtk_vseparator_new());
+#endif
 	pack_to_box(hbox, toolbar->op_box);
 	gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(hbox));
 
@@ -197,10 +205,14 @@ gboolean on_quit(GtkButton *btn, GtkShotToolbar *toolbar) {
 	return TRUE;
 }
 
-GtkBox* create_pen_box(GtkShotToolbar *toolbar)
+GtkWidget* create_pen_box(GtkShotToolbar *toolbar)
 {
 	GtkWidget *btn;
-	GtkBox *box = GTK_BOX(gtk_hbox_new(FALSE, 2));
+#if GTK_CHECK_VERSION(3,0,0)
+	GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
+#else
+	GtkWidget *box = gtk_hbox_new(FALSE, 2);
+#endif
 	gint i = 0, size = sizeof(pen_btns) / sizeof(PenButton);
 
 	for (i = 0; i < size; i++) {
@@ -217,29 +229,54 @@ GtkBox* create_pen_box(GtkShotToolbar *toolbar)
 	return box;
 }
 
-GtkBox* create_op_box(GtkShotToolbar *toolbar)
+GtkWidget* create_op_box(GtkShotToolbar *toolbar)
 {
 	GtkWidget *btn;
-	GtkBox *box = GTK_BOX(gtk_hbox_new(FALSE, 2));
+#if GTK_CHECK_VERSION(3,0,0)
+	GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
+#else
+	GtkWidget *box = gtk_hbox_new(FALSE, 2);
+#endif
 
-	btn = create_icon_button(GTK_STOCK_UNDO
-			, _("undo")
-			, G_CALLBACK(on_undo)
-			, FALSE, toolbar);
+#if GTK_CHECK_VERSION(3,0,0)
+	btn = create_icon_button("edit-undo",
+#else
+	btn = create_icon_button(GTK_STOCK_UNDO,
+#endif
+			_("undo"),
+		       	G_CALLBACK(on_undo),
+		       	FALSE, toolbar);
+
 	pack_to_box(box, btn);
-	btn = create_icon_button(GTK_STOCK_SAVE
-			, _("save to file")
+#if GTK_CHECK_VERSION(3,0,0)
+	btn = create_icon_button("document-save",
+#else
+	btn = create_icon_button(GTK_STOCK_SAVE,
+#endif
+			_("save to file")
 			, G_CALLBACK(on_save_to_file)
 			, FALSE, toolbar);
 	pack_to_box(box, btn);
+#if GTK_CHECK_VERSION(3,0,0)
+	pack_to_box(box, gtk_separator_new(GTK_ORIENTATION_VERTICAL));
+#else
 	pack_to_box(box, gtk_vseparator_new());
-	btn = create_icon_button(GTK_STOCK_QUIT
-			, _("exit")
+#endif
+#if GTK_CHECK_VERSION(3,0,0)
+	btn = create_icon_button("application-exit",
+#else
+	btn = create_icon_button(GTK_STOCK_QUIT,
+#endif
+			_("exit")
 			, G_CALLBACK(on_quit)
 			, FALSE, toolbar);
 	pack_to_box(box, btn);
-	btn = create_icon_button(GTK_STOCK_APPLY
-			, _("finish")
+#if GTK_CHECK_VERSION(3,0,0)
+	btn = create_icon_button("_Apply",
+#else
+	btn = create_icon_button(GTK_STOCK_APPLY,
+#endif
+			_("finish")
 			, G_CALLBACK(on_save_to_clipboard)
 			, FALSE, toolbar);
 	pack_to_box(box, btn);

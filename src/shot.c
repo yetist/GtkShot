@@ -27,6 +27,27 @@
 
 #include "shot.h"
 
+#if GTK_CHECK_VERSION(3,0,0)
+#define GDK_Control_L	GDK_KEY_Control_L
+#define GDK_Control_R	GDK_KEY_Control_R
+#define GDK_KP_Up	GDK_KEY_KP_Up
+#define GDK_Up		GDK_KEY_Up
+#define GDK_KP_Down	GDK_KEY_KP_Down
+#define GDK_Down	GDK_KEY_Down
+#define GDK_KP_Left	GDK_KEY_KP_Left
+#define GDK_Left	GDK_KEY_Left
+#define GDK_KP_Right	GDK_KEY_KP_Right
+#define GDK_Right	GDK_KEY_Right
+#define GDK_s GDK_KEY_s
+#define GDK_o GDK_KEY_o
+#define GDK_a GDK_KEY_a
+#define GDK_d GDK_KEY_d
+#define GDK_r GDK_KEY_r
+#define GDK_z GDK_KEY_z
+#define GDK_y GDK_KEY_y
+#define GDK_q GDK_KEY_q
+#endif
+
 #define IS_OUT_RECT(x, y, x0, y0, x1, y1) \
 	( ((x) < (x0) || (x) > (x1)) \
 	  || ((y) < (y0) || (y) > (y1)) )
@@ -57,7 +78,11 @@ static void gtk_shot_init(GtkShot *shot);
 static void gtk_shot_realize(GtkWidget *widget);
 static void gtk_shot_finalize(GObject *obj);
 // Events
+#if GTK_CHECK_VERSION(3,0,0)
+static gboolean on_shot_draw(GtkWidget *widget, cairo_t *cr);
+#else
 static gboolean on_shot_expose(GtkWidget *widget, GdkEventExpose *event);
+#endif
 static gboolean on_shot_button_press(GtkWidget *widget, GdkEventButton *event);
 static gboolean on_shot_button_release(GtkWidget *widget, GdkEventButton *event);
 static gboolean on_shot_motion_notify(GtkWidget *widget, GdkEventMotion *event);
@@ -94,7 +119,11 @@ void gtk_shot_class_init(GtkShotClass *klass)
 
 	obj_class->finalize = gtk_shot_finalize;
 
+#if GTK_CHECK_VERSION(3,0,0)
+	widget_class->draw = on_shot_draw;
+#else
 	widget_class->expose_event = on_shot_expose;
+#endif
 	widget_class->button_press_event = on_shot_button_press;
 	widget_class->button_release_event = on_shot_button_release;
 	widget_class->motion_notify_event = on_shot_motion_notify;
@@ -131,9 +160,9 @@ void gtk_shot_init(GtkShot *shot) {
 	//gtk_window_set_skip_taskbar_hint(GTK_WINDOW(shot), TRUE);
 	// 背景可透明
 	GdkScreen *screen = gtk_widget_get_screen(GTK_WIDGET(shot));
-	GdkColormap *colormap = gdk_screen_get_rgba_colormap(screen);
+	//GdkColormap *colormap = gdk_screen_get_rgba_colormap(screen);
 	gtk_widget_set_app_paintable(GTK_WIDGET(shot), TRUE);
-	gtk_widget_set_colormap(GTK_WIDGET(shot), colormap);
+	//gtk_widget_set_colormap(GTK_WIDGET(shot), colormap);
 
 	shot->x = shot->y = 0;
 	shot->width = gdk_screen_get_width(screen);
@@ -143,7 +172,8 @@ void gtk_shot_init(GtkShot *shot) {
 				, shot->width
 				, shot->height);
 	// 全屏窗口
-	gtk_window_set_default_size(GTK_WINDOW(shot), shot->width, shot->height);
+	gtk_window_fullscreen(GTK_WINDOW(shot));
+	//gtk_window_set_default_size(GTK_WINDOW(shot), shot->width, shot->height);
 	// events
 	gtk_widget_set_events(GTK_WIDGET(shot)
 			, gtk_widget_get_events(GTK_WIDGET(shot))
@@ -194,7 +224,13 @@ void gtk_shot_finalize(GObject *obj)
 void gtk_shot_destroy(GtkShot *shot) {
 	g_return_if_fail(IS_GTK_SHOT(shot));
 
+#if GTK_CHECK_VERSION(3,0,0)
+	GdkDevice *device;
+	device = gtk_get_current_event_device ();
+	gdk_device_ungrab(device, GDK_CURRENT_TIME);
+#else
 	gdk_keyboard_ungrab(GDK_CURRENT_TIME);
+#endif
 	gtk_widget_destroy(GTK_WIDGET(shot));
 }
 
@@ -205,7 +241,13 @@ void gtk_shot_hide(GtkShot *shot)
 	if (gtk_shot_visible(shot)) {
 		gtk_shot_hide_toolbar(shot);
 		gtk_shot_input_hide(shot->input);
+#if GTK_CHECK_VERSION(3,0,0)
+	GdkDevice *device;
+	device = gtk_get_current_event_device ();
+	gdk_device_ungrab(device, GDK_CURRENT_TIME);
+#else
 		gdk_keyboard_ungrab(GDK_CURRENT_TIME);
+#endif
 		gtk_widget_hide(GTK_WIDGET(shot));
 	}
 }
@@ -215,13 +257,19 @@ void gtk_shot_show(GtkShot *shot, gboolean clean) {
 
 	if (gtk_shot_visible(shot)) return;
 	if (clean) {
-		shot->screen_pixbuf =
-			gdk_pixbuf_get_from_drawable(shot->screen_pixbuf
-					, gdk_get_default_root_window()
-					, NULL
-					, shot->x, shot->y
-					, 0, 0
-					, shot->width, shot->height);
+#if GTK_CHECK_VERSION(3,0,0)
+		shot->screen_pixbuf = gdk_pixbuf_get_from_window (
+			       	gdk_get_default_root_window(),
+			       	shot->x, shot->y,
+			       	shot->width, shot->height);
+#else
+		shot->screen_pixbuf = gdk_pixbuf_get_from_drawable(
+				shot->screen_pixbuf,
+			       	gdk_get_default_root_window(), NULL,
+			       	shot->x, shot->y,
+			       	0, 0,
+			       	shot->width, shot->height);
+#endif
 		gtk_shot_clean_section(shot);
 		shot->mode = NORMAL_MODE;
 	}
@@ -268,17 +316,47 @@ GdkPixbuf* gtk_shot_get_section_pixbuf(GtkShot *shot)
 {
 	if (!gtk_shot_has_visible_section(shot)) return NULL;
 
+	GdkPixbuf *pixbuf = NULL;
 	gint x0, y0, x1, y1;
 	gtk_shot_get_section(shot, &x0, &y0, &x1, &y1);
 #ifdef GTK_SHOT_DEBUG
 	debug("screen shot(%d, %d: %d, %d)\n"
 			, x0, y0, x1 - x0, y1 - y0);
 #endif
+#if GTK_CHECK_VERSION(3,0,0)
+	GdkWindow *drawable = NULL;
+#else
 	GdkDrawable *drawable = NULL;
+#endif
 	if (shot->dynamic) {
 		// 获取屏幕上的截图
 		drawable = gdk_get_default_root_window();
+#if GTK_CHECK_VERSION(3,0,0)
+		pixbuf = gdk_pixbuf_get_from_window (drawable,
+				x0, y0, x1 - x0, y1 - y0);
+#else
+		pixbuf = gdk_pixbuf_get_from_drawable(NULL, drawable,
+				NULL, 
+				x0, y0,
+				0, 0,
+				x1 - x0, y1 - y0);
+#endif
 	} else {
+		cairo_t *cr;
+#if GTK_CHECK_VERSION(3,0,0)
+		cairo_surface_t *target;
+
+		target = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, shot->width, shot->height);
+		cr = cairo_create (target);
+		cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+		gtk_shot_draw_screen(shot, cr);
+		gtk_shot_draw_doodle(shot, cr);
+		pixbuf = gdk_pixbuf_get_from_surface (cairo_get_target(cr),
+			x0, y0, x1 - x0, y1 - y0);
+
+		cairo_surface_write_to_png (cairo_get_target(cr), "/tmp/a.png");
+		cairo_destroy(cr);
+#else
 		// 截图和涂鸦绘制在新的画布上
 		// Reference:
 		// http://lists.cairographics.org/archives/cairo/2008-October/015479.html
@@ -287,17 +365,24 @@ GdkPixbuf* gtk_shot_get_section_pixbuf(GtkShot *shot)
 		drawable = gdk_pixmap_new(NULL, shot->width, shot->height, 32);
 		gdk_drawable_set_colormap(drawable, colormap);
 
-		cairo_t *cr = gdk_cairo_create(drawable);
+	       	cr = gdk_cairo_create(drawable);
 		cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
 		gtk_shot_draw_screen(shot, cr);
 		gtk_shot_draw_doodle(shot, cr);
 		cairo_destroy(cr);
+		pixbuf = gdk_pixbuf_get_from_drawable(NULL, drawable,
+				NULL, 
+				x0, y0,
+				0, 0,
+				x1 - x0, y1 - y0);
+#endif
 	}
-	return gdk_pixbuf_get_from_drawable(NULL, drawable
-			, NULL
-			, x0, y0
-			, 0, 0
-			, x1 - x0, y1 - y0);
+	return pixbuf;
+//	return gdk_pixbuf_get_from_drawable(NULL, drawable
+//			, NULL
+//			, x0, y0
+//			, 0, 0
+//			, x1 - x0, y1 - y0);
 }
 
 void gtk_shot_save_section_to_clipboard(GtkShot *shot) {
@@ -443,14 +528,40 @@ void gtk_shot_grab_key(GtkShot *shot) {
 	g_return_if_fail(IS_GTK_SHOT(shot));
 
 	shot->grab_key = TRUE;
+#if GTK_CHECK_VERSION(3,0,0)
+	GdkDevice *device;
+	device = gtk_get_current_event_device ();
+	gdk_device_grab (device,
+			gtk_widget_get_window(GTK_WIDGET(shot)),
+			GDK_OWNERSHIP_NONE, //grab_ownership
+			FALSE, //owner_events
+			gtk_widget_get_events(GTK_WIDGET(shot)) |
+		       	GDK_BUTTON_MOTION_MASK |
+			GDK_POINTER_MOTION_MASK |
+			GDK_POINTER_MOTION_HINT_MASK |
+			GDK_BUTTON_PRESS_MASK |
+			GDK_BUTTON_RELEASE_MASK |
+			GDK_KEY_PRESS_MASK |
+			GDK_KEY_RELEASE_MASK, //event_mask
+			gdk_cursor_new(GDK_CROSS), //cursor
+			GDK_CURRENT_TIME //time_
+			);
+#else
 	gdk_keyboard_grab(gtk_widget_get_window(GTK_WIDGET(shot)), FALSE, GDK_CURRENT_TIME);
+#endif
 }
 
 void gtk_shot_ungrab_key(GtkShot *shot) {
 	g_return_if_fail(IS_GTK_SHOT(shot));
 
 	shot->grab_key = FALSE;
+#if GTK_CHECK_VERSION(3,0,0)
+	GdkDevice *device;
+	device = gtk_get_current_event_device ();
+	gdk_device_ungrab(device, GDK_CURRENT_TIME);
+#else
 	gdk_keyboard_ungrab(GDK_CURRENT_TIME);
+#endif
 }
 
 void gtk_shot_refresh(GtkShot *shot)
@@ -458,6 +569,37 @@ void gtk_shot_refresh(GtkShot *shot)
 	gdk_window_invalidate_rect(gtk_widget_get_window(GTK_WIDGET(shot)), NULL, FALSE);
 }
 
+#if GTK_CHECK_VERSION(3,0,0)
+static gboolean on_shot_draw(GtkWidget *widget, cairo_t *cr)
+{
+	GtkShot *shot = GTK_SHOT(widget);
+	cairo_t *mask_cr;
+
+	cairo_set_operator(cr, shot->dynamic ? CAIRO_OPERATOR_SOURCE : CAIRO_OPERATOR_OVER);
+
+	mask_cr = cairo_create(shot->mask_surface);
+	cairo_set_operator(mask_cr, CAIRO_OPERATOR_SOURCE);
+	// 窗口上绘制截屏图像
+	gtk_shot_draw_screen(shot, cr);
+	// mask层绘制选区边框和涂鸦
+	gtk_shot_draw_section(shot, mask_cr);
+	// 绘制信息窗口
+	gtk_shot_draw_message(shot, mask_cr);
+	// 绘制提示信息
+	gtk_shot_draw_tip(shot, mask_cr);
+	// 将mask层合并到窗口上
+	cairo_set_source_surface(cr, shot->mask_surface, 0, 0);
+	cairo_paint(cr);
+
+	cairo_destroy(mask_cr);
+	//cairo_destroy(cr);
+	// 捕获按键
+	if (shot->grab_key) {
+		gtk_shot_grab_key(shot);
+	}
+	return TRUE;
+}
+#else
 gboolean on_shot_expose(GtkWidget *widget, GdkEventExpose *event)
 {
 	GtkShot *shot = GTK_SHOT(widget);
@@ -489,6 +631,7 @@ gboolean on_shot_expose(GtkWidget *widget, GdkEventExpose *event)
 
 	return TRUE;
 }
+#endif
 
 gboolean on_shot_button_press(GtkWidget *widget
 		, GdkEventButton *event) {
@@ -555,7 +698,19 @@ gboolean on_shot_motion_notify(GtkWidget *widget, GdkEventMotion *event)
 	GdkModifierType state;
 	GdkPoint cursor;
 
+#if GTK_CHECK_VERSION(3,0,0)
+	GdkDevice *device;
+	device = gtk_get_current_event_device ();
+	gdk_window_get_device_position (
+			gtk_widget_get_window(widget), //GdkWindow *window,
+			device, //GdkDevice *device,
+			&cursor.x, //gint *x,
+			&cursor.y, //gint *y,
+			NULL //GdkModifierType *mask
+			);
+#else
 	gtk_widget_get_pointer(widget, &cursor.x, &cursor.y);
+#endif
 	if (event->state & GDK_BUTTON1_MASK)
        	{
 	       	// 鼠标被按下
