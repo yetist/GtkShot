@@ -1,9 +1,15 @@
 dnl Process this file with autoconf to produce a configure script.
 
+AC_PREREQ([2.69])
 AC_INIT([GtkShot], [2.0], [crazydan0@126.com])
-AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AM_INIT_AUTOMAKE([1.11 no-dist-gzip dist-xz tar-ustar])
+AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_HEADERS([config.h])
 
+AM_MAINTAINER_MODE([enable])
+AM_SILENT_RULES([yes])
+
+# Checks for programs.
 AC_LANG_C
 AM_PROG_LIBTOOL
 
@@ -12,7 +18,22 @@ AC_PROG_CC
 AM_PROG_CC_STDC
 AM_PROG_CC_C_O
 AC_HEADER_STDC
+AC_PATH_PROG(GLIB_COMPILE_RESOURCES, glib-compile-resources)
 
+# Checks for libraries.
+GTK3_REQUIRED=3.8.2
+GTK2_REQUIRED=2.12.0
+PKG_CHECK_MODULES(GTK, gtk+-2.0 >= $GTK2_REQUIRED)
+AC_SUBST(GTK_CFLAGS)
+AC_SUBST(GTK_LIBS)
+
+pkg_modules="x11"
+PKG_CHECK_MODULES(X11, [$pkg_modules])
+AC_SUBST(X11_CFLAGS)
+AC_SUBST(X11_LIBS)
+
+
+dnl dnl
 ALL_LINGUAS="en_US zh_CN zh_TW"
 AM_GLIB_GNU_GETTEXT
 IT_PROG_INTLTOOL([0.40.0])
@@ -32,15 +53,6 @@ if test "x$enable_debug" = "xyes" ; then
   AC_DEFINE([GTK_SHOT_DEBUG], [], [Print debug information when programme is running])
 fi
 
-gtk_modules="gtk+-2.0 >= 2.12.0"
-PKG_CHECK_MODULES(GTK, [$gtk_modules])
-AC_SUBST(GTK_CFLAGS)
-AC_SUBST(GTK_LIBS)
-
-pkg_modules="x11"
-PKG_CHECK_MODULES(X11, [$pkg_modules])
-AC_SUBST(X11_CFLAGS)
-AC_SUBST(X11_LIBS)
 
 GETTEXT_PACKAGE=gtkshot
 AC_SUBST(GETTEXT_PACKAGE)
