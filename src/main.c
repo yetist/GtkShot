@@ -45,76 +45,76 @@ static gint new_lock_file();
 
 int main(int argc, char *argv[]) {
 #ifdef ENABLE_NLS
-  bindtextdomain(GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
-  bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
-  textdomain(GETTEXT_PACKAGE);
+	bindtextdomain(GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
+	bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
+	textdomain(GETTEXT_PACKAGE);
 #endif
 
-  gint pid = new_lock_file();
+	gint pid = new_lock_file();
 
-  if (pid > 0) {
-    if (kill(pid, WAKE_UP_SIGNAL) == 0) {
-      exit(0); // 进程确已存在,则退出新进程
-    } else { // 否则,重新创建锁定文件
-      remove_lock_file();
-      new_lock_file();
-    }
-  }
-  signal(WAKE_UP_SIGNAL, wake_up);
-  signal(SIGINT, exit_clean);
+	if (pid > 0) {
+		if (kill(pid, WAKE_UP_SIGNAL) == 0) {
+			exit(0); // 进程确已存在,则退出新进程
+		} else { // 否则,重新创建锁定文件
+			remove_lock_file();
+			new_lock_file();
+		}
+	}
+	signal(WAKE_UP_SIGNAL, wake_up);
+	signal(SIGINT, exit_clean);
 
-  gtk_init(&argc, &argv);
+	gtk_init(&argc, &argv);
 
-  shot = gtk_shot_new();
-  shot->quit = quit;
-  shot->dblclick = save_to_clipboard;
+	shot = gtk_shot_new();
+	shot->quit = quit;
+	shot->dblclick = save_to_clipboard;
 
-  gtk_window_set_title(GTK_WINDOW(shot), GTK_SHOT_NAME);
-  GdkPixbuf *icon = gdk_pixbuf_new_from_xpm_data((const char**)gtkshot_xpm);
-  gtk_window_set_icon(GTK_WINDOW(shot), icon);
-  g_object_unref(icon);
+	gtk_window_set_title(GTK_WINDOW(shot), GTK_SHOT_NAME);
+	GdkPixbuf *icon = gdk_pixbuf_new_from_xpm_data((const char**)gtkshot_xpm);
+	gtk_window_set_icon(GTK_WINDOW(shot), icon);
+	g_object_unref(icon);
 
-  gtk_shot_show(shot, TRUE);
-  gtk_main();
+	gtk_shot_show(shot, TRUE);
+	gtk_main();
 
-  return 0;
+	return 0;
 }
 
 void wake_up(gint signo) {
-  gtk_shot_show(shot, TRUE);
-  debug("GtkShot has been wake up...\n");
+	gtk_shot_show(shot, TRUE);
+	debug("GtkShot has been wake up...\n");
 }
 
 void exit_clean(gint signo) {
-  quit();
+	quit();
 }
 
 void quit() {
-  debug("GtkShot has exit" \
-                  ", you will not get shot image any more...\n");
+	debug("GtkShot has exit" \
+			", you will not get shot image any more...\n");
 
-  remove_lock_file();
-  gtk_main_quit();
-  exit(0);
+	remove_lock_file();
+	gtk_main_quit();
+	exit(0);
 }
 
 void save_to_clipboard() {
-  if (gtk_shot_has_visible_section(shot)) {
-    gtk_shot_save_section_to_clipboard(shot);
-    gtk_shot_hide(shot);
-  } else {
-    gtk_shot_quit(shot);
-  }
+	if (gtk_shot_has_visible_section(shot)) {
+		gtk_shot_save_section_to_clipboard(shot);
+		gtk_shot_hide(shot);
+	} else {
+		gtk_shot_quit(shot);
+	}
 }
 
 void remove_lock_file() {
-  if (remove(LOCK_FILE) == 0) {
-    debug("clean lock file [%s] successfully...\n", LOCK_FILE);
-  } else {
-    debug("can not remove lock file [%s]: %s" \
-              ", please remove it by yourself...\n"
-                                  , LOCK_FILE, strerror(errno));
-  }
+	if (remove(LOCK_FILE) == 0) {
+		debug("clean lock file [%s] successfully...\n", LOCK_FILE);
+	} else {
+		debug("can not remove lock file [%s]: %s" \
+				", please remove it by yourself...\n"
+				, LOCK_FILE, strerror(errno));
+	}
 }
 
 /**
@@ -124,29 +124,29 @@ void remove_lock_file() {
  *                ,并保留原锁文件;
  */
 gint new_lock_file() {
-  FILE *f = fopen(LOCK_FILE, "r");
-  gint pid = 0;
+	FILE *f = fopen(LOCK_FILE, "r");
+	gint pid = 0;
 
-  if (f) {
-    fscanf(f, "gtk-shot-pid: %d", &pid);
-    //fread(&pid, sizeof(gint), 1, f);
+	if (f) {
+		fscanf(f, "gtk-shot-pid: %d", &pid);
+		//fread(&pid, sizeof(gint), 1, f);
 #ifdef GTK_SHOT_DEBUG
-    debug("GtkShot exists: pid is %d\n", pid);
+		debug("GtkShot exists: pid is %d\n", pid);
 #endif
-  } else if ((f = fopen(LOCK_FILE, "w+"))) {
-    pid = getpid();
-    fprintf(f, "gtk-shot-pid: %d", pid);
-    //fwrite(&pid, sizeof(gint), 1, f);
+	} else if ((f = fopen(LOCK_FILE, "w+"))) {
+		pid = getpid();
+		fprintf(f, "gtk-shot-pid: %d", pid);
+		//fwrite(&pid, sizeof(gint), 1, f);
 #ifdef GTK_SHOT_DEBUG
-    debug("new GtkShot: pid is %d\n", pid);
+		debug("new GtkShot: pid is %d\n", pid);
 #endif
-    pid = 0;
-  } else {
-    debug("no lock file and create lock file failed[%s]: %s\n"
-                                , LOCK_FILE, strerror(errno));
-    exit(-1);
-  }
-  if (f) fclose(f);
+		pid = 0;
+	} else {
+		debug("no lock file and create lock file failed[%s]: %s\n"
+				, LOCK_FILE, strerror(errno));
+		exit(-1);
+	}
+	if (f) fclose(f);
 
-  return pid;
+	return pid;
 }
