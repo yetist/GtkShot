@@ -360,8 +360,7 @@ GdkPixbuf* gtk_shot_get_section_pixbuf(GtkShot *shot)
 		// 截图和涂鸦绘制在新的画布上
 		// Reference:
 		// http://lists.cairographics.org/archives/cairo/2008-October/015479.html
-		GdkColormap *colormap =
-			gdk_drawable_get_colormap(gtk_widget_get_window(GTK_WIDGET(shot)));
+		GdkColormap *colormap = gdk_drawable_get_colormap(gtk_widget_get_window(GTK_WIDGET(shot)));
 		drawable = gdk_pixmap_new(NULL, shot->width, shot->height, 32);
 		gdk_drawable_set_colormap(drawable, colormap);
 

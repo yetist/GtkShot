@@ -351,18 +351,18 @@ gboolean on_color_button_expose(GtkWidget *widget
 		, gpointer *color)
 {
 	cairo_t *cr;
-	GtkAllocation *allocation;
+	GtkAllocation allocation;
 	gint c = GPOINTER_TO_INT(color);
 
 	cr = gdk_cairo_create(gtk_widget_get_window(widget));
 	cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
 
 	SET_CAIRO_RGB(cr, c);
-	gtk_widget_get_allocation (widget, allocation);
-	cairo_rectangle(cr, allocation->x
-			, allocation->y
-			, allocation->width
-			, allocation->height);
+	gtk_widget_get_allocation (widget, &allocation);
+	cairo_rectangle(cr, allocation.x
+			, allocation.y
+			, allocation.width
+			, allocation.height);
 	cairo_fill(cr);
 
 	cairo_destroy(cr);
